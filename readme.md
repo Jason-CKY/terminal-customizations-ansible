@@ -2,6 +2,8 @@
 
 This is an ansible playbook to setup both zsh plugins and oh-my-posh custom terminal theme.
 
+![image](https://user-images.githubusercontent.com/27609953/222961450-5bd1dc80-6173-42e4-bd50-b063ff3d3ae5.png)
+
 The ansible playbook basically follows the 2 gists ([here](https://gist.github.com/Jason-CKY/476fcfc6970cd8553fa3b8552db5624e) and [here](https://gist.github.com/Jason-CKY/27d78f9c3fb663e9421b76026b0fbfb0)) I've written to:
 
 * Install zsh
