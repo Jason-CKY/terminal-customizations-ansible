@@ -2,6 +2,9 @@
 - name: Install zsh
   hosts: all
   become: true
+  
+  vars:
+    ansible_user: root
 
   tasks:
     - name: Update apt cache
@@ -18,3 +21,40 @@
       ansible.builtin.apt:
         name: zsh
         state: present
+
+    - name: Install git
+      ansible.builtin.apt:
+        name: git
+        state: present
+
+    - name: Set zsh as default shell
+      ansible.builtin.user:
+        name: "{{ ansible_user }}"
+        shell: /bin/zsh
+        
+    - name: Set oh my zsh role 
+      include_role:
+        name: gantsign.oh-my-zsh
+      vars:
+        users:
+          - username: "{{ ansible_user }}"
+            oh_my_zsh:
+              plugins:
+                - git
+                - z
+                - web-search
+                - zsh-autosuggestions
+                - zsh-syntax-highlighting
+
+    - name: Git clone zsh-autosuggestions
+      ansible.builtin.shell:
+        cmd: git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+       
+    - name: Git clone zsh-syntax-highlighting
+      ansible.builtin.shell:
+        cmd: git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+
+    # - name: Install oh-my-zsh
+    #   ansible.builtin.shell:
+    #     cmd: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    #   changed_when: False

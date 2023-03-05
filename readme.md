@@ -9,3 +9,12 @@ The ansible playbook basically follows the 2 gists ([here](https://gist.github.c
 * Install zsh plugins
 * Install oh-my-posh
 * Copy my custom theme
+
+## Usage
+
+Edit the `inventory` file to add your machines' IP addresses
+
+```sh
+ansible-galaxy role install -r ./requirements.yml
+ansible-playbook -i ./inventory main.yml --ask-become-pass
+```
