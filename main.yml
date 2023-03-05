@@ -5,6 +5,7 @@
   
   vars:
     ansible_user: root
+    posh_settings_file: ./files/posh-settings/remote-settings.json
 
   tasks:
     - name: Update apt cache
@@ -17,6 +18,16 @@
         name: curl
         state: present
 
+    - name: Install wget
+      ansible.builtin.apt:
+        name: wget
+        state: present
+
+    - name: Install unzip
+      ansible.builtin.apt:
+        name: unzip
+        state: present
+
     - name: Install zsh
       ansible.builtin.apt:
         name: zsh
@@ -26,11 +37,6 @@
       ansible.builtin.apt:
         name: git
         state: present
-
-    - name: Set zsh as default shell
-      ansible.builtin.user:
-        name: "{{ ansible_user }}"
-        shell: /bin/zsh
         
     - name: Set oh my zsh role 
       include_role:
@@ -47,14 +53,54 @@
                 - zsh-syntax-highlighting
 
     - name: Git clone zsh-autosuggestions
-      ansible.builtin.shell:
-        cmd: git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-       
-    - name: Git clone zsh-syntax-highlighting
-      ansible.builtin.shell:
-        cmd: git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+      ansible.builtin.git:
+        repo: https://github.com/zsh-users/zsh-autosuggestions.git
+        dest: "~/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
 
-    # - name: Install oh-my-zsh
-    #   ansible.builtin.shell:
-    #     cmd: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-    #   changed_when: False
+    - name: Git clone zsh-syntax-highlighting
+      ansible.builtin.git:
+        repo: https://github.com/zsh-users/zsh-syntax-highlighting.git
+        dest: "~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+
+    - name: Check if /usr/local/bin/oh-my-posh exists
+      stat:
+        path: "/usr/local/bin/oh-my-posh"
+      register: oh_my_posh
+
+    - name: Download oh-my-posh
+      ansible.builtin.get_url:
+        url: https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-linux-amd64
+        dest: /usr/local/bin/oh-my-posh
+        mode: a+x
+      when: not oh_my_posh.stat.exists
+
+    - name: Check if ~/.poshthemes exists
+      stat:
+        path: "~/.poshthemes"
+      register: poshthemes_dir
+
+    - name: Create ~/.poshthemes directory if it does not exist
+      ansible.builtin.file:
+        path: ~/.poshthemes
+        state: directory
+
+    - name: Download poshthemes
+      ansible.builtin.unarchive:
+        src: https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/themes.zip
+        dest: ~/.poshthemes
+        remote_src: yes
+      when: not poshthemes_dir.stat.exists
+
+    - name: Copy "my-posh-settings.json" into ~/.poshthemes/my-posh-settings.json
+      ansible.builtin.copy:
+        src: "{{ posh_settings_file }}"
+        dest: ~/.poshthemes/my-posh-settings.json
+      when: not poshthemes_dir.stat.exists
+
+    - name: Insert eval "$(oh-my-posh init zsh --config ~/.poshthemes/my-posh-settings.json)" at the end of ~/.zshrc file
+      ansible.builtin.blockinfile:
+        path: ~/.zshrc
+        insertafter: EOF
+        block: |
+          eval "$(oh-my-posh init zsh --config ~/.poshthemes/my-posh-settings.json)"
+      when: not poshthemes_dir.stat.exists

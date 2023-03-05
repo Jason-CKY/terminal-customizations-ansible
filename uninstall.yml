@@ -1,0 +1,39 @@
+---
+- name: Uninstall zsh
+  hosts: all
+  become: true
+  
+  vars:
+    uninstall_oh_my_zsh_script: ./files/scripts/uninstall-oh-my-zsh.sh
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Check if ~/.oh-my-zsh dir exists
+      stat:
+        path: "~/.oh-my-zsh"
+      register: oh_my_zsh_dir
+
+    - name: Uninstall oh-my-zsh
+      ansible.builtin.script:
+        cmd: "{{ uninstall_oh_my_zsh_script }}"
+      when: oh_my_zsh_dir.stat.exists
+
+    - name: Uninstall zsh
+      ansible.builtin.apt:
+        name: zsh
+        state: absent
+        
+    - name: Check if /usr/local/bin/oh-my-posh exists
+      stat:
+        path: "/usr/local/bin/oh-my-posh"
+      register: oh_my_posh
+
+    - name: Uninstall oh-my-posh
+      ansible.builtin.file:
+        path: /usr/local/bin/oh-my-posh
+        state: absent
+      when: oh_my_posh.stat.exists
