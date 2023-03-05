@@ -37,3 +37,26 @@
         path: /usr/local/bin/oh-my-posh
         state: absent
       when: oh_my_posh.stat.exists
+
+    - name: Check if /usr/local/bin/oh-my-posh exists
+      stat:
+        path: "/usr/local/bin/oh-my-posh"
+      register: oh_my_posh
+
+    - name: Uninstall oh-my-posh
+      ansible.builtin.file:
+        path: /usr/local/bin/oh-my-posh
+        state: absent
+      when: oh_my_posh.stat.exists
+
+    - name: Check if ~/.poshthemes exists
+      stat:
+        path: "~/.poshthemes"
+      register: poshthemes_dir
+
+    - name: Remove ~/.poshthemes
+      ansible.builtin.file:
+        path: /usr/local/bin/oh-my-posh
+        state: absent
+      when: poshthemes_dir.stat.exists
+
