@@ -1,2 +1,5 @@
-[laptops]
-asus-laptop
+[vms]
+ubuntu-server-1
+ubuntu-server-2
+ubuntu-server-3
+ubuntu-server-4

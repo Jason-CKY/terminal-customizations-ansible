@@ -4,7 +4,8 @@
   become: true
   
   vars:
-    uninstall_oh_my_zsh_script: ./files/scripts/uninstall-oh-my-zsh.sh
+    ansible_user: jason
+    home_folder: /home/jason
 
   tasks:
     - name: Update apt cache
@@ -12,14 +13,21 @@
         update_cache: true
         cache_valid_time: 3600
 
-    - name: Check if ~/.oh-my-zsh dir exists
+    - name: set default shell for users
+      become: yes
+      user:
+        name: '{{ ansible_user }}'
+        shell: /bin/bash
+
+    - name: Check if {{ home_folder }}/.oh-my-zsh dir exists
       stat:
-        path: "~/.oh-my-zsh"
+        path: "{{ home_folder }}/.oh-my-zsh"
       register: oh_my_zsh_dir
 
-    - name: Uninstall oh-my-zsh
-      ansible.builtin.script:
-        cmd: "{{ uninstall_oh_my_zsh_script }}"
+    - name: Remove {{ home_folder }}/.oh-my-zsh
+      ansible.builtin.file:
+        path: "{{ home_folder }}/.oh-my-zsh"
+        state: absent
       when: oh_my_zsh_dir.stat.exists
 
     - name: Uninstall zsh
@@ -49,14 +57,14 @@
         state: absent
       when: oh_my_posh.stat.exists
 
-    - name: Check if ~/.poshthemes exists
+    - name: Check if {{ home_folder }}/.poshthemes exists
       stat:
-        path: "~/.poshthemes"
+        path: "{{ home_folder }}/.poshthemes"
       register: poshthemes_dir
 
-    - name: Remove ~/.poshthemes
+    - name: Remove {{ home_folder }}/.poshthemes
       ansible.builtin.file:
-        path: /usr/local/bin/oh-my-posh
+        path: "{{ home_folder }}/.poshthemes"
         state: absent
       when: poshthemes_dir.stat.exists
 

@@ -4,15 +4,20 @@
   become: true
   
   vars:
-    ansible_user: root
-    posh_settings_file: ./files/posh-settings/remote-settings.json
+    ansible_user: jason
+    home_folder: /home/jason
+    posh_settings_file: ./files/posh-settings/wsl-settings.json
 
-  tasks:
+  pre_tasks:
     - name: Update apt cache
       ansible.builtin.apt:
         update_cache: true
         cache_valid_time: 3600
-    
+
+    - name: Set timezone to Asia/Singapore
+      community.general.timezone:
+        name: Asia/Singapore
+
     - name: Install curl
       ansible.builtin.apt:
         name: curl
@@ -23,19 +28,20 @@
         name: wget
         state: present
 
+    - name: Install git
+      ansible.builtin.apt:
+        name: git
+        state: present
+        
     - name: Install unzip
       ansible.builtin.apt:
         name: unzip
         state: present
 
+  tasks:
     - name: Install zsh
       ansible.builtin.apt:
         name: zsh
-        state: present
-
-    - name: Install git
-      ansible.builtin.apt:
-        name: git
         state: present
         
     - name: Set oh my zsh role 
@@ -55,12 +61,12 @@
     - name: Git clone zsh-autosuggestions
       ansible.builtin.git:
         repo: https://github.com/zsh-users/zsh-autosuggestions.git
-        dest: "~/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
+        dest: "{{ home_folder }}/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
 
     - name: Git clone zsh-syntax-highlighting
       ansible.builtin.git:
         repo: https://github.com/zsh-users/zsh-syntax-highlighting.git
-        dest: "~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+        dest: "{{ home_folder }}/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
 
     - name: Check if /usr/local/bin/oh-my-posh exists
       stat:
@@ -76,30 +82,30 @@
 
     - name: Check if ~/.poshthemes exists
       stat:
-        path: "~/.poshthemes"
+        path: "{{ home_folder }}/.poshthemes"
       register: poshthemes_dir
 
     - name: Create ~/.poshthemes directory if it does not exist
       ansible.builtin.file:
-        path: ~/.poshthemes
+        path: "{{ home_folder }}/.poshthemes"
         state: directory
 
     - name: Download poshthemes
       ansible.builtin.unarchive:
         src: https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/themes.zip
-        dest: ~/.poshthemes
+        dest: "{{ home_folder }}/.poshthemes"
         remote_src: yes
       when: not poshthemes_dir.stat.exists
 
-    - name: Copy "my-posh-settings.json" into ~/.poshthemes/my-posh-settings.json
+    - name: Copy {{ posh_settings_file }} into ~/.poshthemes/my-posh-settings.json
       ansible.builtin.copy:
         src: "{{ posh_settings_file }}"
-        dest: ~/.poshthemes/my-posh-settings.json
+        dest: "{{ home_folder }}/.poshthemes/my-posh-settings.json"
       when: not poshthemes_dir.stat.exists
 
     - name: Insert eval "$(oh-my-posh init zsh --config ~/.poshthemes/my-posh-settings.json)" at the end of ~/.zshrc file
       ansible.builtin.blockinfile:
-        path: ~/.zshrc
+        path: "{{ home_folder }}/.zshrc"
         insertafter: EOF
         block: |
           eval "$(oh-my-posh init zsh --config ~/.poshthemes/my-posh-settings.json)"
